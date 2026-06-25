@@ -9,38 +9,150 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCatequizandosIndexRouteImport } from './routes/_app/catequizandos.index'
+import { Route as AppCatequizandosNovoRouteImport } from './routes/_app/catequizandos.novo'
+import { Route as AppCatequizandosIdRouteImport } from './routes/_app/catequizandos.$id'
+import { Route as AppCatequizandosIdEditarRouteImport } from './routes/_app/catequizandos.$id.editar'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppUsuariosRoute = AppUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppCatequizandosIndexRoute = AppCatequizandosIndexRouteImport.update({
+  id: '/catequizandos/',
+  path: '/catequizandos/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppCatequizandosNovoRoute = AppCatequizandosNovoRouteImport.update({
+  id: '/catequizandos/novo',
+  path: '/catequizandos/novo',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppCatequizandosIdRoute = AppCatequizandosIdRouteImport.update({
+  id: '/catequizandos/$id',
+  path: '/catequizandos/$id',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppCatequizandosIdEditarRoute =
+  AppCatequizandosIdEditarRouteImport.update({
+    id: '/editar',
+    path: '/editar',
+    getParentRoute: () => AppCatequizandosIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/usuarios': typeof AppUsuariosRoute
+  '/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
+  '/catequizandos/novo': typeof AppCatequizandosNovoRoute
+  '/catequizandos/': typeof AppCatequizandosIndexRoute
+  '/catequizandos/$id/editar': typeof AppCatequizandosIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/usuarios': typeof AppUsuariosRoute
+  '/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
+  '/catequizandos/novo': typeof AppCatequizandosNovoRoute
+  '/catequizandos': typeof AppCatequizandosIndexRoute
+  '/catequizandos/$id/editar': typeof AppCatequizandosIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/usuarios': typeof AppUsuariosRoute
+  '/_app/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
+  '/_app/catequizandos/novo': typeof AppCatequizandosNovoRoute
+  '/_app/catequizandos/': typeof AppCatequizandosIndexRoute
+  '/_app/catequizandos/$id/editar': typeof AppCatequizandosIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/usuarios'
+    | '/catequizandos/$id'
+    | '/catequizandos/novo'
+    | '/catequizandos/'
+    | '/catequizandos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/usuarios'
+    | '/catequizandos/$id'
+    | '/catequizandos/novo'
+    | '/catequizandos'
+    | '/catequizandos/$id/editar'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/dashboard'
+    | '/_app/usuarios'
+    | '/_app/catequizandos/$id'
+    | '/_app/catequizandos/novo'
+    | '/_app/catequizandos/'
+    | '/_app/catequizandos/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRouteRoute: typeof AppRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +160,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/usuarios': {
+      id: '/_app/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AppUsuariosRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/catequizandos/': {
+      id: '/_app/catequizandos/'
+      path: '/catequizandos'
+      fullPath: '/catequizandos/'
+      preLoaderRoute: typeof AppCatequizandosIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/catequizandos/novo': {
+      id: '/_app/catequizandos/novo'
+      path: '/catequizandos/novo'
+      fullPath: '/catequizandos/novo'
+      preLoaderRoute: typeof AppCatequizandosNovoRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/catequizandos/$id': {
+      id: '/_app/catequizandos/$id'
+      path: '/catequizandos/$id'
+      fullPath: '/catequizandos/$id'
+      preLoaderRoute: typeof AppCatequizandosIdRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/catequizandos/$id/editar': {
+      id: '/_app/catequizandos/$id/editar'
+      path: '/editar'
+      fullPath: '/catequizandos/$id/editar'
+      preLoaderRoute: typeof AppCatequizandosIdEditarRouteImport
+      parentRoute: typeof AppCatequizandosIdRoute
+    }
   }
 }
 
+interface AppCatequizandosIdRouteChildren {
+  AppCatequizandosIdEditarRoute: typeof AppCatequizandosIdEditarRoute
+}
+
+const AppCatequizandosIdRouteChildren: AppCatequizandosIdRouteChildren = {
+  AppCatequizandosIdEditarRoute: AppCatequizandosIdEditarRoute,
+}
+
+const AppCatequizandosIdRouteWithChildren =
+  AppCatequizandosIdRoute._addFileChildren(AppCatequizandosIdRouteChildren)
+
+interface AppRouteRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppUsuariosRoute: typeof AppUsuariosRoute
+  AppCatequizandosIdRoute: typeof AppCatequizandosIdRouteWithChildren
+  AppCatequizandosNovoRoute: typeof AppCatequizandosNovoRoute
+  AppCatequizandosIndexRoute: typeof AppCatequizandosIndexRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+  AppUsuariosRoute: AppUsuariosRoute,
+  AppCatequizandosIdRoute: AppCatequizandosIdRouteWithChildren,
+  AppCatequizandosNovoRoute: AppCatequizandosNovoRoute,
+  AppCatequizandosIndexRoute: AppCatequizandosIndexRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRouteRoute: AppRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
