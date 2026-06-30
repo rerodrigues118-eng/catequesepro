@@ -29,6 +29,10 @@ dist-ssr
 
 # Wrangler / Cloudflare
 .wrangler/
+.dev.vars
+
+# Vercel build output (generated automatically by Vercel on deploy)
+.vercel/output/
 
 # Editor directories and files
 .vscode/*
