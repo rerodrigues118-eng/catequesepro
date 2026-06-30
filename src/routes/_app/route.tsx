@@ -7,8 +7,11 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/auth" replace />;
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return <div className="text-[#94a3b8]">Carregando...</div>;
+  }
+  if (!user) return <Navigate to="/login" replace />;
   return (
     <AppShell>
       <Outlet />

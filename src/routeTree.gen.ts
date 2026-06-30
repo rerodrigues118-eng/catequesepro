@@ -9,19 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppUsuariosRouteImport } from './routes/_app/usuarios'
+import { Route as AppPresencasRouteImport } from './routes/_app/presencas'
+import { Route as AppPlanoAulasRouteImport } from './routes/_app/plano-aulas'
+import { Route as AppNotificacoesRouteImport } from './routes/_app/notificacoes'
+import { Route as AppMatriculasRouteImport } from './routes/_app/matriculas'
+import { Route as AppIdeiasIaRouteImport } from './routes/_app/ideias-ia'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppConfiguracoesRouteImport } from './routes/_app/configuracoes'
+import { Route as AppCalendarioRouteImport } from './routes/_app/calendario'
+import { Route as AppAvisosRouteImport } from './routes/_app/avisos'
+import { Route as AppAtividadesRouteImport } from './routes/_app/atividades'
 import { Route as AppCatequizandosIndexRouteImport } from './routes/_app/catequizandos.index'
 import { Route as AppCatequizandosNovoRouteImport } from './routes/_app/catequizandos.novo'
 import { Route as AppCatequizandosIdRouteImport } from './routes/_app/catequizandos.$id'
 import { Route as AppCatequizandosIdEditarRouteImport } from './routes/_app/catequizandos.$id.editar'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -38,9 +53,54 @@ const AppUsuariosRoute = AppUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppPresencasRoute = AppPresencasRouteImport.update({
+  id: '/presencas',
+  path: '/presencas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppPlanoAulasRoute = AppPlanoAulasRouteImport.update({
+  id: '/plano-aulas',
+  path: '/plano-aulas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMatriculasRoute = AppMatriculasRouteImport.update({
+  id: '/matriculas',
+  path: '/matriculas',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppIdeiasIaRoute = AppIdeiasIaRouteImport.update({
+  id: '/ideias-ia',
+  path: '/ideias-ia',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppCalendarioRoute = AppCalendarioRouteImport.update({
+  id: '/calendario',
+  path: '/calendario',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAvisosRoute = AppAvisosRouteImport.update({
+  id: '/avisos',
+  path: '/avisos',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAtividadesRoute = AppAtividadesRouteImport.update({
+  id: '/atividades',
+  path: '/atividades',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppCatequizandosIndexRoute = AppCatequizandosIndexRouteImport.update({
@@ -67,8 +127,18 @@ const AppCatequizandosIdEditarRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/atividades': typeof AppAtividadesRoute
+  '/avisos': typeof AppAvisosRoute
+  '/calendario': typeof AppCalendarioRoute
+  '/configuracoes': typeof AppConfiguracoesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/ideias-ia': typeof AppIdeiasIaRoute
+  '/matriculas': typeof AppMatriculasRoute
+  '/notificacoes': typeof AppNotificacoesRoute
+  '/plano-aulas': typeof AppPlanoAulasRoute
+  '/presencas': typeof AppPresencasRoute
   '/usuarios': typeof AppUsuariosRoute
   '/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
   '/catequizandos/novo': typeof AppCatequizandosNovoRoute
@@ -77,8 +147,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/atividades': typeof AppAtividadesRoute
+  '/avisos': typeof AppAvisosRoute
+  '/calendario': typeof AppCalendarioRoute
+  '/configuracoes': typeof AppConfiguracoesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/ideias-ia': typeof AppIdeiasIaRoute
+  '/matriculas': typeof AppMatriculasRoute
+  '/notificacoes': typeof AppNotificacoesRoute
+  '/plano-aulas': typeof AppPlanoAulasRoute
+  '/presencas': typeof AppPresencasRoute
   '/usuarios': typeof AppUsuariosRoute
   '/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
   '/catequizandos/novo': typeof AppCatequizandosNovoRoute
@@ -89,8 +169,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_app/atividades': typeof AppAtividadesRoute
+  '/_app/avisos': typeof AppAvisosRoute
+  '/_app/calendario': typeof AppCalendarioRoute
+  '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/ideias-ia': typeof AppIdeiasIaRoute
+  '/_app/matriculas': typeof AppMatriculasRoute
+  '/_app/notificacoes': typeof AppNotificacoesRoute
+  '/_app/plano-aulas': typeof AppPlanoAulasRoute
+  '/_app/presencas': typeof AppPresencasRoute
   '/_app/usuarios': typeof AppUsuariosRoute
   '/_app/catequizandos/$id': typeof AppCatequizandosIdRouteWithChildren
   '/_app/catequizandos/novo': typeof AppCatequizandosNovoRoute
@@ -101,8 +191,18 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
+    | '/login'
+    | '/register'
+    | '/atividades'
+    | '/avisos'
+    | '/calendario'
+    | '/configuracoes'
     | '/dashboard'
+    | '/ideias-ia'
+    | '/matriculas'
+    | '/notificacoes'
+    | '/plano-aulas'
+    | '/presencas'
     | '/usuarios'
     | '/catequizandos/$id'
     | '/catequizandos/novo'
@@ -111,8 +211,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
+    | '/login'
+    | '/register'
+    | '/atividades'
+    | '/avisos'
+    | '/calendario'
+    | '/configuracoes'
     | '/dashboard'
+    | '/ideias-ia'
+    | '/matriculas'
+    | '/notificacoes'
+    | '/plano-aulas'
+    | '/presencas'
     | '/usuarios'
     | '/catequizandos/$id'
     | '/catequizandos/novo'
@@ -122,8 +232,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
-    | '/auth'
+    | '/login'
+    | '/register'
+    | '/_app/atividades'
+    | '/_app/avisos'
+    | '/_app/calendario'
+    | '/_app/configuracoes'
     | '/_app/dashboard'
+    | '/_app/ideias-ia'
+    | '/_app/matriculas'
+    | '/_app/notificacoes'
+    | '/_app/plano-aulas'
+    | '/_app/presencas'
     | '/_app/usuarios'
     | '/_app/catequizandos/$id'
     | '/_app/catequizandos/novo'
@@ -134,16 +254,24 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -167,11 +295,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsuariosRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/presencas': {
+      id: '/_app/presencas'
+      path: '/presencas'
+      fullPath: '/presencas'
+      preLoaderRoute: typeof AppPresencasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/plano-aulas': {
+      id: '/_app/plano-aulas'
+      path: '/plano-aulas'
+      fullPath: '/plano-aulas'
+      preLoaderRoute: typeof AppPlanoAulasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/notificacoes': {
+      id: '/_app/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof AppNotificacoesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/matriculas': {
+      id: '/_app/matriculas'
+      path: '/matriculas'
+      fullPath: '/matriculas'
+      preLoaderRoute: typeof AppMatriculasRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/ideias-ia': {
+      id: '/_app/ideias-ia'
+      path: '/ideias-ia'
+      fullPath: '/ideias-ia'
+      preLoaderRoute: typeof AppIdeiasIaRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/configuracoes': {
+      id: '/_app/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AppConfiguracoesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/calendario': {
+      id: '/_app/calendario'
+      path: '/calendario'
+      fullPath: '/calendario'
+      preLoaderRoute: typeof AppCalendarioRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/avisos': {
+      id: '/_app/avisos'
+      path: '/avisos'
+      fullPath: '/avisos'
+      preLoaderRoute: typeof AppAvisosRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/atividades': {
+      id: '/_app/atividades'
+      path: '/atividades'
+      fullPath: '/atividades'
+      preLoaderRoute: typeof AppAtividadesRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/catequizandos/': {
@@ -217,7 +408,16 @@ const AppCatequizandosIdRouteWithChildren =
   AppCatequizandosIdRoute._addFileChildren(AppCatequizandosIdRouteChildren)
 
 interface AppRouteRouteChildren {
+  AppAtividadesRoute: typeof AppAtividadesRoute
+  AppAvisosRoute: typeof AppAvisosRoute
+  AppCalendarioRoute: typeof AppCalendarioRoute
+  AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppIdeiasIaRoute: typeof AppIdeiasIaRoute
+  AppMatriculasRoute: typeof AppMatriculasRoute
+  AppNotificacoesRoute: typeof AppNotificacoesRoute
+  AppPlanoAulasRoute: typeof AppPlanoAulasRoute
+  AppPresencasRoute: typeof AppPresencasRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
   AppCatequizandosIdRoute: typeof AppCatequizandosIdRouteWithChildren
   AppCatequizandosNovoRoute: typeof AppCatequizandosNovoRoute
@@ -225,7 +425,16 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppAtividadesRoute: AppAtividadesRoute,
+  AppAvisosRoute: AppAvisosRoute,
+  AppCalendarioRoute: AppCalendarioRoute,
+  AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppIdeiasIaRoute: AppIdeiasIaRoute,
+  AppMatriculasRoute: AppMatriculasRoute,
+  AppNotificacoesRoute: AppNotificacoesRoute,
+  AppPlanoAulasRoute: AppPlanoAulasRoute,
+  AppPresencasRoute: AppPresencasRoute,
   AppUsuariosRoute: AppUsuariosRoute,
   AppCatequizandosIdRoute: AppCatequizandosIdRouteWithChildren,
   AppCatequizandosNovoRoute: AppCatequizandosNovoRoute,
@@ -239,8 +448,19 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

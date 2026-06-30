@@ -1,20 +1,20 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Cross, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button, Field, Input } from "@/components/ui-lite";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Entrar — CatequesePRO" },
       { name: "description", content: "Acesse sua conta CatequesePRO." },
     ],
   }),
-  component: AuthPage,
+  component: LoginPage,
 });
 
-function AuthPage() {
+function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -22,15 +22,26 @@ function AuthPage() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      // Redirect automatically to /register instead of requiring manual click
+      navigate({ to: `/register?token=${encodeURIComponent(token)}` });
+    }
+  }, [navigate]);
 
-  const submit = (e: FormEvent) => {
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const r = login(email, password);
-    if (!r.ok) setError(r.error);
+    const result = await login(email, password);
+    if (!result.ok) setError(result.error);
     else navigate({ to: "/dashboard" });
   };
+
+  if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#f8fafc" }}>
@@ -88,12 +99,6 @@ function AuthPage() {
             Entrar
           </Button>
         </form>
-
-        <div className="mt-6 text-[11px] text-[#64748b] leading-relaxed">
-          <p className="font-medium text-[#374151] mb-1">Contas demo</p>
-          <p>admin@paroquia.test / admin</p>
-          <p>catequista@paroquia.test / catequista</p>
-        </div>
       </div>
     </div>
   );

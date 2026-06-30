@@ -7,18 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 .output
 .vinxi
-.tanstack/**
 .nitro
+
+# TanStack cache
+.tanstack/**
+
+# Environment files — NEVER commit real keys!
+.env
+.env.local
+.env.production
 *.local
+.dev.vars
 
 # Wrangler / Cloudflare
 .wrangler/
-.dev.vars
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +40,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Lovable internal
+.lovable/
+
+# Temporary files
+temp_unpack/
+enhanced-resolve-*.tgz
+jiti-*.tgz
+
+# Lock files (keep only bun.lock OR package-lock.json — not both)
+package-lock.json

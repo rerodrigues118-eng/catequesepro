@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Search, Eye, Pencil, Trash2, Plus, Users } from "lucide-react";
+import { Search, Eye, Pencil, Trash2, Plus, Users, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useDb, calcIdade, nivelLabel } from "@/lib/db";
@@ -13,8 +13,8 @@ export const Route = createFileRoute("/_app/catequizandos/")({
 const PAGE_SIZE = 20;
 
 function ListPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { user, profile } = useAuth();
+  const isAdmin = profile?.role === "admin" || profile?.role === "coordenacao";
   const { db, deleteCatequizando } = useDb();
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ function ListPage() {
 
   const filtered = useMemo(() => {
     let list = db.catequizandos;
-    if (!isAdmin && user?.catequista_id) list = list.filter((c) => c.catequista_id === user.catequista_id);
+    if (!isAdmin && profile?.catequista_id) list = list.filter((c) => c.catequista_id === profile.catequista_id);
     if (isAdmin) {
       if (comunidadeId !== "all") list = list.filter((c) => c.comunidade_id === comunidadeId);
       if (catequistaId !== "all") list = list.filter((c) => c.catequista_id === catequistaId);
@@ -209,8 +209,20 @@ function ListPage() {
                       <div className="text-xs text-[#64748b] truncate">
                         {com?.nome} · {cat?.nome}
                       </div>
-                      <div className="mt-1">
+                      <div className="mt-1 flex flex-wrap gap-2 items-center text-xs text-[#64748b]">
                         <Badge tone="cinza">{nivelLabel(c.nivel)}</Badge>
+                        <span className="inline-flex items-center gap-1">
+                          <FileText size={14} />
+                          {[
+                            c.documento_certidao_url,
+                            c.documento_batismo_url,
+                            c.documento_laudo_url,
+                            c.documento_responsavel_url,
+                            c.documento_autorizacao_url,
+                          ].filter(Boolean).length > 0
+                            ? "Anexos"
+                            : "Sem anexos"}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">

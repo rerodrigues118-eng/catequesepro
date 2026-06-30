@@ -137,15 +137,16 @@ export function Field({
 }
 
 /* ---------- Badge ---------- */
-type BadgeTone = "verde" | "ambar" | "azul" | "cinza";
+type BadgeTone = "verde" | "ambar" | "amarelo" | "azul" | "cinza";
 export function Badge({ children, tone = "azul", className }: { children: ReactNode; tone?: BadgeTone; className?: string }) {
   const tones: Record<BadgeTone, { bg: string; fg: string }> = {
     verde: { bg: "#dcfce7", fg: "#15803d" },
     ambar: { bg: "#fef3c7", fg: "#d97706" },
+    amarelo: { bg: "#fef3c7", fg: "#d97706" },
     azul: { bg: "#dbeafe", fg: "#1e40af" },
     cinza: { bg: "#f1f5f9", fg: "#64748b" },
   };
-  const c = tones[tone];
+  const c = tones[tone] ?? tones.azul;
   return (
     <span
       className={cn("inline-flex items-center rounded-[6px] px-[10px] py-[2px] text-xs font-medium", className)}

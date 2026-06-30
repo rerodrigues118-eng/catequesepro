@@ -7,62 +7,156 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useDb, type Usuario } from "./db";
+import { type Session } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
 
-const SESSION_KEY = "cateqpro:session:v1";
-
-interface AuthContextValue {
-  user: Usuario | null;
-  login: (email: string, password: string) => { ok: true } | { ok: false; error: string };
-  logout: () => void;
+interface Profile {
+  id: string;
+  role: "admin" | "coordenacao" | "catequista";
+  catequista_id?: string | null;
+  permitir_ia?: boolean | null;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+interface AuthContextValue {
+  user: { id: string; email?: string | null; nome?: string | null } | null;
+  session: Session | null;
+  profile: Profile | null;
+  isLoading: boolean;
+  isInitialized: boolean;
+  login: (email: string, password: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+  logout: () => Promise<void>;
+}
+
+const defaultAuthContextValue: AuthContextValue = {
+  user: null,
+  session: null,
+  profile: null,
+  isLoading: true,
+  isInitialized: false,
+  login: async () => ({ ok: false, error: "Auth provider not initialized" }),
+  logout: async () => {},
+};
+
+const AuthContext = createContext<AuthContextValue>(defaultAuthContextValue);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { db } = useDb();
-  const [userId, setUserId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return window.localStorage.getItem(SESSION_KEY);
-    } catch {
+  const [user, setUser] = useState<AuthContextValue["user"]>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from<Profile>("profiles")
+      .select("id, role, catequista_id, permitir_ia")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      console.warn(`Perfil não encontrado para usuário ${userId}. Um admin deve criá-lo manualmente.`);
+      setProfile(null);
       return null;
     }
-  });
+
+    setProfile(data);
+    return data;
+  }, []);
+
+  const fetchSession = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const session = data.session ?? null;
+    setSession(session);
+    return session;
+  }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (userId) window.localStorage.setItem(SESSION_KEY, userId);
-      else window.localStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* ignore */
+    let isMounted = true;
+
+    const initialize = async () => {
+      const session = await fetchSession();
+      if (!isMounted) return;
+
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          nome: session.user.user_metadata?.nome ?? null,
+        });
+        await fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
+      setIsInitialized(true);
+    };
+
+    void initialize();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      setSession(session ?? null);
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          nome: session.user.user_metadata?.nome ?? null,
+        });
+        await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+      setIsLoading(false);
+      setIsInitialized(true);
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error || !data.session?.user) {
+      return { ok: false, error: error?.message ?? "Email ou senha inválidos." };
     }
-  }, [userId]);
 
-  const user = useMemo(() => db.usuarios.find((u) => u.id === userId) ?? null, [db.usuarios, userId]);
+    const user = data.session.user;
+    setSession(data.session);
+    setUser({
+      id: user.id,
+      email: user.email,
+      nome: user.user_metadata?.nome ?? null,
+    });
 
-  const login: AuthContextValue["login"] = useCallback(
-    (email, password) => {
-      const u = db.usuarios.find(
-        (x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password,
-      );
-      if (!u) return { ok: false, error: "Email ou senha inválidos." };
-      setUserId(u.id);
-      return { ok: true };
-    },
-    [db.usuarios],
+    let profileData = await fetchProfile(user.id);
+    if (!profileData) {
+      console.warn(`Perfil não encontrado para ${user.id}. Usuário não tem acesso ao sistema.`);
+      return { ok: false, error: "Perfil de usuário não encontrado. Entre em contato com um administrador." };
+    }
+
+    return { ok: true };
+  }, [fetchProfile]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, session, profile, isLoading, isInitialized, login, logout }),
+    [user, session, profile, isLoading, isInitialized, login, logout],
   );
-
-  const logout = useCallback(() => setUserId(null), []);
-
-  const value = useMemo<AuthContextValue>(() => ({ user, login, logout }), [user, login, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
-  return ctx;
+  return useContext(AuthContext);
 }

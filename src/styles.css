@@ -81,3 +81,33 @@ textarea:focus {
     page-break-inside: avoid;
   }
 }
+
+/* Native input class for fields not using ui-lite */
+.input {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #0f172a;
+  border: 1px solid var(--color-border);
+  font-family: inherit;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* Hide scrollbar on mobile bottom nav (WebKit) */
+.app-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Spin animation for loading spinners */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+

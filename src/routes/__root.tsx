@@ -11,8 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { DbProvider } from "../lib/db";
-import { AuthProvider } from "../lib/auth";
+import { DbProvider } from "@/lib/db";
+import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -71,8 +71,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "CatequesePRO" },
       { name: "description", content: "Gestão de catequizandos para paróquias católicas." },
+      { name: "theme-color", content: "#1e40af" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
     ],
     links: [
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
+      { rel: "stylesheet", href: "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -104,13 +110,30 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      }).catch((err) => {
+        console.warn("[SW] Unregistration failed:", err);
+      }).finally(() => {
+        navigator.serviceWorker.register("/sw.js").catch((err) => {
+          console.warn("[SW] Registration failed:", err);
+        });
+      });
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <DbProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <DbProvider>
           <Outlet />
-        </AuthProvider>
-      </DbProvider>
+        </DbProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
