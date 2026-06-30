@@ -52,11 +52,11 @@ function IdeiasIAPage() {
   const [error, setError] = useState<string | null>(null);
   const [historico, setHistorico] = useState<IdeiaGerada[]>([]);
 
-  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+  if (profile && profile.role !== "coordenacao" && profile.role !== "catequista") {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const isAllowed = profile?.role === "admin" || profile?.role === "coordenacao" || !!profile?.permitir_ia;
+  const isAllowed = profile?.role === "coordenacao" || !!profile?.permitir_ia;
 
   async function gerarIdeia() {
     if (!isAllowed) return;

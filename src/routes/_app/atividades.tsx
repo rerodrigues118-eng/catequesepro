@@ -83,7 +83,7 @@ function AtividadesPage() {
     return atividades.filter((a) => a.catequizando_id === filtroAluno);
   }, [atividades, filtroAluno]);
 
-  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+  if (profile && profile.role !== "coordenacao" && profile.role !== "catequista") {
     return <Navigate to="/dashboard" replace />;
   }
 

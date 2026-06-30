@@ -71,7 +71,7 @@ function CalendarioPage() {
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+  if (profile && profile.role !== "coordenacao" && profile.role !== "catequista") {
     return <Navigate to="/dashboard" replace />;
   }
 

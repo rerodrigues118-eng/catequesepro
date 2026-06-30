@@ -20,16 +20,16 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Início", icon: LayoutDashboard },
   { to: "/catequizandos", label: "Catequizandos", shortLabel: "Cadastros", icon: Users },
   { to: "/catequizandos/novo", label: "Novo cadastro", shortLabel: "Novo", icon: Plus },
-  { to: "/presencas", label: "Presenças", shortLabel: "Presença", icon: CalendarCheck, roles: ["admin", "coordenacao", "catequista"] },
+  { to: "/presencas", label: "Presenças", shortLabel: "Presença", icon: CalendarCheck, roles: ["coordenacao", "catequista"] },
 
   // Catequista section
   { to: "/avisos", label: "Mural de avisos", shortLabel: "Avisos", tiIcon: "ti-speakerphone" },
-  { to: "/plano-aulas", label: "Plano de aulas", shortLabel: "Plano", tiIcon: "ti-calendar-event", roles: ["admin", "coordenacao", "catequista"] },
-  { to: "/atividades", label: "Atividades", shortLabel: "Atividades", tiIcon: "ti-clipboard-list", roles: ["admin", "coordenacao", "catequista"] },
-  { to: "/ideias-ia", label: "Ideias IA", shortLabel: "IA", tiIcon: "ti-bulb", roles: ["admin", "coordenacao", "catequista"] },
+  { to: "/plano-aulas", label: "Plano de aulas", shortLabel: "Plano", tiIcon: "ti-calendar-event", roles: ["coordenacao", "catequista"] },
+  { to: "/atividades", label: "Atividades", shortLabel: "Atividades", tiIcon: "ti-clipboard-list", roles: ["coordenacao", "catequista"] },
+  { to: "/ideias-ia", label: "Ideias IA", shortLabel: "IA", tiIcon: "ti-bulb", roles: ["coordenacao", "catequista"] },
 
   // Coordenação section
-  { to: "/calendario", label: "Calendário", shortLabel: "Calendário", tiIcon: "ti-calendar-month", roles: ["admin", "coordenacao", "catequista"] },
+  { to: "/calendario", label: "Calendário", shortLabel: "Calendário", tiIcon: "ti-calendar-month", roles: ["coordenacao", "catequista"] },
   { to: "/matriculas", label: "Matrículas", shortLabel: "Matrículas", tiIcon: "ti-user-plus", roles: ["admin", "coordenacao"] },
 
   // Admin section

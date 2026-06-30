@@ -14,7 +14,7 @@ function Presencas() {
   const { db, createPresenca, refresh } = useDb();
   const isCatequista = profile?.role === "catequista";
 
-  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+  if (profile && profile.role !== "coordenacao" && profile.role !== "catequista") {
     return <Navigate to="/dashboard" replace />;
   }
 
