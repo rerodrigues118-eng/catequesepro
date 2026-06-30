@@ -24,6 +24,7 @@ interface Turma {
   periodo_fim?: string | null;
   created_at: string;
 }
+
 interface ListaEspera {
   id: string;
   turma_id: string;
@@ -64,7 +65,7 @@ const EMPTY_ESPERA = {
 
 function MatriculasPage() {
   const { profile } = useAuth();
-  const { db } = useDb();
+  const { db, refresh } = useDb();
 
   const isCoord = profile?.role === "admin" || profile?.role === "coordenacao";
   const [ano, setAno] = useState(new Date().getFullYear());
@@ -77,7 +78,14 @@ function MatriculasPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [esperaForm, setEsperaForm] = useState({ ...EMPTY_ESPERA });
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+
+  // Search input for registered students in the current class details
+  const [searchCatequizando, setSearchCatequizando] = useState("");
+
+  // Deletion States
+  const [deletingTurmaId, setDeletingTurmaId] = useState<string | null>(null);
+  const [deletingCatequizandoId, setDeletingCatequizandoId] = useState<string | null>(null);
+  const [deletingEsperaId, setDeletingEsperaId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -94,7 +102,9 @@ function MatriculasPage() {
     setLoading(false);
   }
 
-  useEffect(() => { void load(); }, [ano, profile]);
+  useEffect(() => {
+    void load();
+  }, [ano, profile]);
 
   if (profile && profile.role !== "admin" && profile.role !== "coordenacao") {
     return <Navigate to="/dashboard" replace />;
@@ -114,10 +124,11 @@ function MatriculasPage() {
   }
 
   function nomeCatequista(id?: string | null) {
-    return id ? (db.catequistas.find((c) => c.id === id)?.nome ?? "—") : "—";
+    return id ? db.catequistas.find((c) => c.id === id)?.nome ?? "—" : "—";
   }
+
   function nomeComunidade(id?: string | null) {
-    return id ? (db.comunidades.find((c) => c.id === id)?.nome ?? "—") : "—";
+    return id ? db.comunidades.find((c) => c.id === id)?.nome ?? "—" : "—";
   }
 
   async function handleSaveTurma() {
@@ -169,8 +180,65 @@ function MatriculasPage() {
     void load();
   }
 
+  // Deletion functions
+  async function handleDeleteTurma() {
+    if (!deletingTurmaId) return;
+    const { error } = await supabase.from("turmas_vagas").delete().eq("id", deletingTurmaId);
+    if (error) {
+      alert(`Erro ao excluir turma: ${error.message}`);
+    } else {
+      setDeletingTurmaId(null);
+      setTurmaSelecionada(null);
+      void load();
+    }
+  }
+
+  async function handleDeleteCatequizando() {
+    if (!deletingCatequizandoId) return;
+    const { error } = await supabase.from("catequizandos").delete().eq("id", deletingCatequizandoId);
+    if (error) {
+      alert(`Erro ao excluir catequizando: ${error.message}`);
+    } else {
+      setDeletingCatequizandoId(null);
+      await refresh();
+      void load();
+    }
+  }
+
+  async function handleDeleteEspera() {
+    if (!deletingEsperaId) return;
+    const { error } = await supabase.from("lista_espera").delete().eq("id", deletingEsperaId);
+    if (error) {
+      alert(`Erro ao remover da lista de espera: ${error.message}`);
+    } else {
+      setDeletingEsperaId(null);
+      void load();
+    }
+  }
+
   const anoOptions = [ano - 1, ano, ano + 1];
   const esperaTurma = turmaSelecionada ? espera.filter((e) => e.turma_id === turmaSelecionada.id) : [];
+
+  // Filtered list of registered students in the current class details
+  const matriculadosTurma = useMemo(() => {
+    if (!turmaSelecionada) return [];
+    let list = db.catequizandos.filter((c) => {
+      return c.catequista_id === turmaSelecionada.catequista_id && c.comunidade_id === turmaSelecionada.comunidade_id;
+    });
+
+    if (searchCatequizando.trim()) {
+      const q = searchCatequizando.toLowerCase().trim();
+      list = list.filter(
+        (c) =>
+          c.nome.toLowerCase().includes(q) ||
+          (c.nome_pai && c.nome_pai.toLowerCase().includes(q)) ||
+          (c.nome_mae && c.nome_mae.toLowerCase().includes(q)) ||
+          (c.nome_responsavel && (c as any).nome_responsavel.toLowerCase().includes(q)) ||
+          (c.endereco && c.endereco.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [db.catequizandos, turmaSelecionada, searchCatequizando]);
 
   return (
     <div>
@@ -180,9 +248,22 @@ function MatriculasPage() {
         right={
           <div className="flex items-center gap-2">
             <Select value={String(ano)} onChange={(e) => setAno(Number(e.target.value))} className="w-28">
-              {anoOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+              {anoOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
             </Select>
-            {isCoord && <Button onClick={() => { setForm({ ...EMPTY_FORM }); setShowTurmaModal(true); }}><i className="ti ti-plus" /> Nova turma</Button>}
+            {isCoord && (
+              <Button
+                onClick={() => {
+                  setForm({ ...EMPTY_FORM });
+                  setShowTurmaModal(true);
+                }}
+              >
+                <i className="ti ti-plus" /> Nova turma
+              </Button>
+            )}
           </div>
         }
       />
@@ -190,27 +271,92 @@ function MatriculasPage() {
       {turmaSelecionada ? (
         // Detalhe da turma
         <div>
-          <button onClick={() => setTurmaSelecionada(null)} className="flex items-center gap-1 text-sm text-[#1e40af] mb-4 hover:underline">
+          <button
+            onClick={() => {
+              setTurmaSelecionada(null);
+              setSearchCatequizando("");
+            }}
+            className="flex items-center gap-1 text-sm text-[#1e40af] mb-4 hover:underline"
+          >
             <i className="ti ti-arrow-left" /> Voltar às turmas
           </button>
-          <Card className="mb-4">
+          <Card className="mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">{turmaSelecionada.nome_turma ?? NIVEL_LABEL[turmaSelecionada.nivel]}</h2>
-                <p className="text-sm text-[#64748b]">{nomeCatequista(turmaSelecionada.catequista_id)} · {nomeComunidade(turmaSelecionada.comunidade_id)}</p>
+                <h2 className="text-base font-semibold">
+                  {turmaSelecionada.nome_turma ?? NIVEL_LABEL[turmaSelecionada.nivel]}
+                </h2>
+                <p className="text-sm text-[#64748b]">
+                  {nomeCatequista(turmaSelecionada.catequista_id)} · {nomeComunidade(turmaSelecionada.comunidade_id)}
+                </p>
               </div>
-              {isCoord && (
-                <Button variant="secondary" onClick={() => setShowEsperaModal(turmaSelecionada.id)}>
-                  <i className="ti ti-user-plus" /> Adicionar à espera
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {isCoord && (
+                  <Button variant="secondary" onClick={() => setShowEsperaModal(turmaSelecionada.id)}>
+                    <i className="ti ti-user-plus" /> Adicionar à espera
+                  </Button>
+                )}
+                {isCoord && (
+                  <Button variant="destructive" onClick={() => setDeletingTurmaId(turmaSelecionada.id)}>
+                    <i className="ti ti-trash" /> Excluir Turma
+                  </Button>
+                )}
+              </div>
             </div>
           </Card>
+
+          {/* Seção Alunos Matriculados */}
+          <div className="mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 className="text-sm font-semibold text-[#374151]">
+                Catequizandos Matriculados ({matriculadosTurma.length})
+              </h3>
+              <div className="w-full sm:w-64">
+                <Input
+                  placeholder="Pesquisar por informações..."
+                  value={searchCatequizando}
+                  onChange={(e) => setSearchCatequizando(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            {matriculadosTurma.length === 0 ? (
+              <Card className="text-center py-6 text-sm text-[#64748b]">Nenhum catequizando matriculado encontrado.</Card>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {matriculadosTurma.map((c) => (
+                  <Card key={c.id} className="flex flex-col justify-between">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <p className="text-sm font-medium text-[#0f172a]">{c.nome}</p>
+                        <p className="text-xs text-[#64748b]">Pais: {c.nome_pai || "—"} / {c.nome_mae || "—"}</p>
+                        {c.endereco && <p className="text-xs text-[#94a3b8] mt-0.5"><i className="ti ti-map-pin" /> {c.endereco}</p>}
+                      </div>
+                    </div>
+                    {isCoord && (
+                      <div className="flex justify-end pt-2 border-t border-[#f1f5f9] mt-2">
+                        <button
+                          onClick={() => setDeletingCatequizandoId(c.id)}
+                          className="text-xs text-[#dc2626] hover:underline flex items-center gap-1"
+                        >
+                          <i className="ti ti-trash" /> Excluir Cadastro
+                        </button>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Lista de espera */}
           <h3 className="text-sm font-semibold text-[#374151] mb-3">Lista de espera ({esperaTurma.length})</h3>
           {esperaTurma.length === 0 ? (
-            <EmptyState icon={<i className="ti ti-user-plus" style={{ fontSize: 40 }} />} title="Lista de espera vazia" />
+            <EmptyState
+              icon={<i className="ti ti-user-plus" style={{ fontSize: 40 }} />}
+              title="Lista de espera vazia"
+            />
           ) : (
             <div className="space-y-2">
               {esperaTurma.map((e) => (
@@ -220,7 +366,9 @@ function MatriculasPage() {
                       <span className="text-lg font-bold text-[#94a3b8]">#{e.posicao}</span>
                       <div>
                         <p className="text-sm font-medium text-[#0f172a]">{e.nome_catequizando}</p>
-                        <p className="text-xs text-[#64748b]">Resp.: {e.nome_responsavel} · {e.telefone ?? ""}</p>
+                        <p className="text-xs text-[#64748b]">
+                          Resp.: {e.nome_responsavel} · {e.telefone ?? ""}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -234,8 +382,13 @@ function MatriculasPage() {
                         {e.status === "chamado" ? "Chamado" : "Aguardando"}
                       </span>
                       {isCoord && e.status !== "chamado" && (
-                        <Button variant="secondary" onClick={() => chamarProximo(e)}>
+                        <Button variant="secondary" size="sm" onClick={() => chamarProximo(e)}>
                           <i className="ti ti-bell" /> Chamar
+                        </Button>
+                      )}
+                      {isCoord && (
+                        <Button variant="destructive" size="sm" onClick={() => setDeletingEsperaId(e.id)}>
+                          <i className="ti ti-trash" /> Remover
                         </Button>
                       )}
                     </div>
@@ -265,47 +418,74 @@ function MatriculasPage() {
               <Card key={t.id}>
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-[#0f172a]">{t.nome_turma ?? NIVEL_LABEL[t.nivel]}</h3>
+                    <h3 className="text-sm font-semibold text-[#0f172a]">
+                      {t.nome_turma ?? NIVEL_LABEL[t.nivel]}
+                    </h3>
                     <p className="text-xs text-[#64748b]">{nomeCatequista(t.catequista_id)}</p>
                     <p className="text-xs text-[#94a3b8]">{nomeComunidade(t.comunidade_id)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span
                       className="text-[10px] font-medium rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: t.matriculas_abertas ? "#dcfce7" : "#f1f5f9", color: t.matriculas_abertas ? "#15803d" : "#94a3b8" }}
+                      style={{
+                        backgroundColor: t.matriculas_abertas ? "#dcfce7" : "#f1f5f9",
+                        color: t.matriculas_abertas ? "#15803d" : "#94a3b8",
+                      }}
                     >
                       {t.matriculas_abertas ? "Matrículas abertas" : "Fechado"}
                     </span>
                     {isCoord && (
-                      <button onClick={() => toggleMatriculas(t)} className="text-[10px] text-[#1e40af] hover:underline">Alterar</button>
+                      <button
+                        onClick={() => toggleMatriculas(t)}
+                        className="text-[10px] text-[#1e40af] hover:underline"
+                      >
+                        Alterar
+                      </button>
                     )}
                   </div>
                 </div>
                 <div className="mb-3">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#64748b]">{matriculados}/{max} vagas</span>
+                    <span className="text-[#64748b]">
+                      {matriculados}/{max} vagas
+                    </span>
                     <span style={{ color: cor, fontWeight: 600 }}>{pct}%</span>
                   </div>
                   <div className="h-[6px] rounded-full bg-[#e2e8f0]">
-                    <div className="h-[6px] rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: cor }} />
+                    <div
+                      className="h-[6px] rounded-full"
+                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: cor }}
+                    />
                   </div>
                 </div>
                 {t.periodo_inicio && (
                   <p className="text-xs text-[#94a3b8] mb-3">
                     Período: {new Date(t.periodo_inicio + "T00:00:00").toLocaleDateString("pt-BR")}
-                    {t.periodo_fim ? ` a ${new Date(t.periodo_fim + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    {t.periodo_fim
+                      ? ` a ${new Date(t.periodo_fim + "T00:00:00").toLocaleDateString("pt-BR")}`
+                      : ""}
                   </p>
                 )}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setTurmaSelecionada(t)}
-                    className="text-xs font-medium text-[#1e40af] hover:underline"
-                  >
-                    Ver detalhes
-                  </button>
-                  {esperaCount > 0 && (
-                    <button onClick={() => setTurmaSelecionada(t)} className="text-xs text-[#d97706]">
-                      {esperaCount} em espera
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f1f5f9]">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setTurmaSelecionada(t)}
+                      className="text-xs font-medium text-[#1e40af] hover:underline"
+                    >
+                      Ver detalhes
+                    </button>
+                    {esperaCount > 0 && (
+                      <button onClick={() => setTurmaSelecionada(t)} className="text-xs text-[#d97706]">
+                        {esperaCount} em espera
+                      </button>
+                    )}
+                  </div>
+                  {isCoord && (
+                    <button
+                      onClick={() => setDeletingTurmaId(t.id)}
+                      className="text-xs text-[#dc2626] hover:underline flex items-center gap-1"
+                    >
+                      <i className="ti ti-trash" /> Excluir
                     </button>
                   )}
                 </div>
@@ -317,20 +497,40 @@ function MatriculasPage() {
 
       {/* Modal nova turma */}
       {showTurmaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(15,23,42,0.4)" }}>
-          <div className="bg-white rounded-[12px] p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(15,23,42,0.4)" }}
+        >
+          <div
+            className="bg-white rounded-[12px] p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+          >
             <h2 className="text-base font-semibold mb-4">Nova turma</h2>
             <div className="space-y-3">
               <Field label="Catequista">
-                <Select value={form.catequista_id} onChange={(e) => setForm((f) => ({ ...f, catequista_id: e.target.value }))}>
+                <Select
+                  value={form.catequista_id}
+                  onChange={(e) => setForm((f) => ({ ...f, catequista_id: e.target.value }))}
+                >
                   <option value="">Selecione...</option>
-                  {db.catequistas.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  {db.catequistas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Comunidade">
-                <Select value={form.comunidade_id} onChange={(e) => setForm((f) => ({ ...f, comunidade_id: e.target.value }))}>
+                <Select
+                  value={form.comunidade_id}
+                  onChange={(e) => setForm((f) => ({ ...f, comunidade_id: e.target.value }))}
+                >
                   <option value="">Selecione...</option>
-                  {db.comunidades.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  {db.comunidades.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Nível">
@@ -341,26 +541,50 @@ function MatriculasPage() {
                 </Select>
               </Field>
               <Field label="Nome da turma (opcional)">
-                <Input value={form.nome_turma} onChange={(e) => setForm((f) => ({ ...f, nome_turma: e.target.value }))} placeholder="Ex: Turma A" />
+                <Input
+                  value={form.nome_turma}
+                  onChange={(e) => setForm((f) => ({ ...f, nome_turma: e.target.value }))}
+                  placeholder="Ex: Turma A"
+                />
               </Field>
               <Field label="Máximo de vagas">
-                <Input type="number" value={form.max_vagas} onChange={(e) => setForm((f) => ({ ...f, max_vagas: e.target.value }))} min={1} />
+                <Input
+                  type="number"
+                  value={form.max_vagas}
+                  onChange={(e) => setForm((f) => ({ ...f, max_vagas: e.target.value }))}
+                  min={1}
+                />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Período início">
-                  <Input type="date" value={form.periodo_inicio} onChange={(e) => setForm((f) => ({ ...f, periodo_inicio: e.target.value }))} />
+                  <Input
+                    type="date"
+                    value={form.periodo_inicio}
+                    onChange={(e) => setForm((f) => ({ ...f, periodo_inicio: e.target.value }))}
+                  />
                 </Field>
                 <Field label="Período fim">
-                  <Input type="date" value={form.periodo_fim} onChange={(e) => setForm((f) => ({ ...f, periodo_fim: e.target.value }))} />
+                  <Input
+                    type="date"
+                    value={form.periodo_fim}
+                    onChange={(e) => setForm((f) => ({ ...f, periodo_fim: e.target.value }))}
+                  />
                 </Field>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.matriculas_abertas} onChange={(e) => setForm((f) => ({ ...f, matriculas_abertas: e.target.checked }))} className="w-4 h-4 accent-[#1e40af]" />
+                <input
+                  type="checkbox"
+                  checked={form.matriculas_abertas}
+                  onChange={(e) => setForm((f) => ({ ...f, matriculas_abertas: e.target.checked }))}
+                  className="w-4 h-4 accent-[#1e40af]"
+                />
                 <span className="text-sm">Abrir matrículas agora</span>
               </label>
             </div>
             <div className="flex justify-end gap-2 mt-5">
-              <Button variant="secondary" onClick={() => setShowTurmaModal(false)}>Cancelar</Button>
+              <Button variant="secondary" onClick={() => setShowTurmaModal(false)}>
+                Cancelar
+              </Button>
               <Button onClick={handleSaveTurma} disabled={saving}>
                 {saving ? "Salvando..." : "Criar turma"}
               </Button>
@@ -371,35 +595,94 @@ function MatriculasPage() {
 
       {/* Modal lista de espera */}
       {showEsperaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(15,23,42,0.4)" }}>
-          <div className="bg-white rounded-[12px] p-6 w-full max-w-md" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(15,23,42,0.4)" }}
+        >
+          <div
+            className="bg-white rounded-[12px] p-6 w-full max-w-md"
+            style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+          >
             <h2 className="text-base font-semibold mb-4">Adicionar à lista de espera</h2>
             <div className="space-y-3">
               <Field label="Nome do responsável" required>
-                <Input value={esperaForm.nome_responsavel} onChange={(e) => setEsperaForm((f) => ({ ...f, nome_responsavel: e.target.value }))} />
+                <Input
+                  value={esperaForm.nome_responsavel}
+                  onChange={(e) => setEsperaForm((f) => ({ ...f, nome_responsavel: e.target.value }))}
+                />
               </Field>
               <Field label="Nome do catequizando" required>
-                <Input value={esperaForm.nome_catequizando} onChange={(e) => setEsperaForm((f) => ({ ...f, nome_catequizando: e.target.value }))} />
+                <Input
+                  value={esperaForm.nome_catequizando}
+                  onChange={(e) => setEsperaForm((f) => ({ ...f, nome_catequizando: e.target.value }))}
+                />
               </Field>
               <Field label="Data de nascimento">
-                <Input type="date" value={esperaForm.data_nascimento} onChange={(e) => setEsperaForm((f) => ({ ...f, data_nascimento: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={esperaForm.data_nascimento}
+                  onChange={(e) => setEsperaForm((f) => ({ ...f, data_nascimento: e.target.value }))}
+                />
               </Field>
               <Field label="Telefone">
-                <Input value={esperaForm.telefone} onChange={(e) => setEsperaForm((f) => ({ ...f, telefone: e.target.value }))} />
+                <Input
+                  value={esperaForm.telefone}
+                  onChange={(e) => setEsperaForm((f) => ({ ...f, telefone: e.target.value }))}
+                />
               </Field>
               <Field label="E-mail">
-                <Input type="email" value={esperaForm.email} onChange={(e) => setEsperaForm((f) => ({ ...f, email: e.target.value }))} />
+                <Input
+                  type="email"
+                  value={esperaForm.email}
+                  onChange={(e) => setEsperaForm((f) => ({ ...f, email: e.target.value }))}
+                />
               </Field>
             </div>
             <div className="flex justify-end gap-2 mt-5">
-              <Button variant="secondary" onClick={() => setShowEsperaModal(null)}>Cancelar</Button>
-              <Button onClick={handleSaveEspera} disabled={saving || !esperaForm.nome_catequizando || !esperaForm.nome_responsavel}>
+              <Button variant="secondary" onClick={() => setShowEsperaModal(null)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveEspera}
+                disabled={saving || !esperaForm.nome_catequizando || !esperaForm.nome_responsavel}
+              >
                 {saving ? "Salvando..." : "Adicionar"}
               </Button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        open={!!deletingTurmaId}
+        title="Excluir Turma"
+        description="Tem certeza que deseja excluir esta turma? Esta ação removerá a turma do sistema (não exclui os catequizandos associados, apenas a turma e suas vagas)."
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={handleDeleteTurma}
+        onCancel={() => setDeletingTurmaId(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deletingCatequizandoId}
+        title="Excluir Catequizando"
+        description="Tem certeza que deseja excluir este cadastro de catequizando permanentemente do sistema? Todos os seus dados, documentos e histórico de sacramentos e presença serão apagados."
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={handleDeleteCatequizando}
+        onCancel={() => setDeletingCatequizandoId(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deletingEsperaId}
+        title="Remover da Fila"
+        description="Tem certeza que deseja remover este registro da lista de espera?"
+        confirmLabel="Remover"
+        destructive
+        onConfirm={handleDeleteEspera}
+        onCancel={() => setDeletingEsperaId(null)}
+      />
     </div>
   );
 }

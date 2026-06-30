@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Card, PageHeader, Button, Field, Select, Textarea } from "@/components/ui-lite";
@@ -51,6 +51,10 @@ function IdeiasIAPage() {
   const [ideia, setIdeia] = useState<IdeiaGerada | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historico, setHistorico] = useState<IdeiaGerada[]>([]);
+
+  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const isAllowed = profile?.role === "admin" || profile?.role === "coordenacao" || !!profile?.permitir_ia;
 

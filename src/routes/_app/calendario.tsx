@@ -71,6 +71,10 @@ function CalendarioPage() {
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  if (profile && profile.role !== "admin" && profile.role !== "coordenacao" && profile.role !== "catequista") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   async function load() {
     setLoading(true);
     const [{ data: paroquiais }, { data: liturgicos }] = await Promise.all([
