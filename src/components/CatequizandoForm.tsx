@@ -38,6 +38,12 @@ export function CatequizandoForm({ existing }: { existing?: Catequizando }) {
   const isCatequista = profile?.role === "catequista";
   const meCatequista = isCatequista ? db.catequistas.find((c) => c.id === profile?.catequista_id) : undefined;
 
+  // Obter a paróquia do catequista (baseada na sua comunidade)
+  const minhaParoquia = useMemo(() => {
+    if (!meCatequista) return undefined;
+    return db.comunidades.find((c) => c.id === meCatequista.comunidade_id)?.paroquia_id;
+  }, [meCatequista, db.comunidades]);
+
   const defaults: FormState = useMemo(() => {
     if (existing) {
       return {
@@ -81,13 +87,13 @@ export function CatequizandoForm({ existing }: { existing?: Catequizando }) {
       documento_laudo_url: "",
       documento_responsavel_url: "",
       documento_autorizacao_url: "",
-      paroquia_id: meCatequista ? db.paroquias[0]?.id ?? "" : db.paroquias[0]?.id ?? "",
+      paroquia_id: meCatequista && minhaParoquia ? minhaParoquia : db.paroquias[0]?.id ?? "",
       comunidade_id: meCatequista ? meCatequista.comunidade_id : "",
       catequista_id: meCatequista ? meCatequista.id : "",
       nivel: "iniciacao",
       foto_url: "",
     };
-  }, [existing, meCatequista, db.paroquias]);
+  }, [existing, meCatequista, minhaParoquia, db.paroquias]);
 
   const [form, setForm] = useState<FormState>(defaults);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
