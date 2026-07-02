@@ -131,8 +131,9 @@ function Dashboard() {
   });
   const [comunidadeFilter, setComunidadeFilter] = useState<string | "all">("all");
   const { loading, paroquias, comunidades, catequistas, catequizandos, presencas, config } = state;
-  const role = profile?.role ?? "catequista";
+  const role = profile?.role ?? "unknown";
   const isAdmin = role === "admin" || role === "coordenacao";
+  const isCatequista = role === "catequista";
 
   useEffect(() => {
     const load = async () => {
@@ -373,7 +374,8 @@ function Dashboard() {
   const presencasHoje = presencas.filter((item) => item.data_presenca === hoje);
   const presentesHoje = presencasHoje.filter((item) => item.status === "presente").length;
   const faltasHoje = presencasHoje.filter((item) => item.status === "falta").length;
-  const naoMarcadosHoje = Math.max(catequizandos.length - (presentesHoje + faltasHoje), 0);
+  const justificadasHoje = presencasHoje.filter((item) => item.status === "justificada").length;
+  const naoMarcadosHoje = Math.max(catequizandos.length - (presentesHoje + faltasHoje + justificadasHoje), 0);
   const pctPresenca = catequizandos.length
     ? Math.round((presentesHoje / Math.max(catequizandos.length, 1)) * 100)
     : 0;
@@ -414,7 +416,8 @@ function Dashboard() {
     return <div style={{ padding: 24, color: "#94a3b8" }}>Carregando...</div>;
   if (!profile) return <div style={{ padding: 24, color: "#94a3b8" }}>Carregando...</div>;
 
-  return (
+  if (isAdmin) {
+    return (
       <div style={{ padding: 16, background: "#f8fafc", minHeight: "100%" }}>
         <div
           style={{
@@ -425,6 +428,7 @@ function Dashboard() {
             flexWrap: "wrap",
             marginBottom: 16,
           }}
+        >
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Dashboard</div>
             <div style={{ fontSize: 12, color: "#64748b" }}>{paroquiaNome}</div>
