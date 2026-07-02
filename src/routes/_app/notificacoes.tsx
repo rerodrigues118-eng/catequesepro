@@ -2,7 +2,15 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Badge, Button, Card, Input, PageHeader, SectionLabel, Textarea } from "@/components/ui-lite";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  PageHeader,
+  SectionLabel,
+  Textarea,
+} from "@/components/ui-lite";
 
 export const Route = createFileRoute("/_app/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — CatequesePRO" }] }),
@@ -30,7 +38,7 @@ type Configuracao = {
 };
 
 function NotificacoesPage() {
-  const { profile, isLoading } = useAuth();
+  const { profile, session, isLoading } = useAuth();
   const [logs, setLogs] = useState<NotificacaoLog[]>([]);
   const [configs, setConfigs] = useState<Configuracao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +79,9 @@ function NotificacoesPage() {
     setConfigLoading(true);
     const { data, error } = await supabase
       .from<Configuracao>("configuracoes_notificacao")
-      .select("id, paroquia_id, paroquias(nome), template_email_faltas_subject, template_email_faltas_body, template_email_idade_subject, template_email_idade_body");
+      .select(
+        "id, paroquia_id, paroquias(nome), template_email_faltas_subject, template_email_faltas_body, template_email_idade_subject, template_email_idade_body",
+      );
 
     if (error) {
       console.error(error);
@@ -91,7 +101,10 @@ function NotificacoesPage() {
 
     const response = await fetch("/api/-reenvio-notificacao", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
       body: JSON.stringify({ notificacao_id: id }),
     });
 
@@ -105,12 +118,14 @@ function NotificacoesPage() {
   };
 
   const currentConfig = configs[0];
-  const emailSubject = selectedType === "faltas"
-    ? currentConfig?.template_email_faltas_subject ?? ""
-    : currentConfig?.template_email_idade_subject ?? "";
-  const emailBody = selectedType === "faltas"
-    ? currentConfig?.template_email_faltas_body ?? ""
-    : currentConfig?.template_email_idade_body ?? "";
+  const emailSubject =
+    selectedType === "faltas"
+      ? (currentConfig?.template_email_faltas_subject ?? "")
+      : (currentConfig?.template_email_idade_subject ?? "");
+  const emailBody =
+    selectedType === "faltas"
+      ? (currentConfig?.template_email_faltas_body ?? "")
+      : (currentConfig?.template_email_idade_body ?? "");
 
   const startEditingBody = () => {
     setEditSubject(emailSubject ?? "");
@@ -120,12 +135,16 @@ function NotificacoesPage() {
 
   const editTemplate = (type: "faltas" | "idade") => {
     setSelectedType(type);
-    setEditSubject(type === "faltas"
-      ? currentConfig?.template_email_faltas_subject ?? ""
-      : currentConfig?.template_email_idade_subject ?? "");
-    setEditBody(type === "faltas"
-      ? currentConfig?.template_email_faltas_body ?? ""
-      : currentConfig?.template_email_idade_body ?? "");
+    setEditSubject(
+      type === "faltas"
+        ? (currentConfig?.template_email_faltas_subject ?? "")
+        : (currentConfig?.template_email_idade_subject ?? ""),
+    );
+    setEditBody(
+      type === "faltas"
+        ? (currentConfig?.template_email_faltas_body ?? "")
+        : (currentConfig?.template_email_idade_body ?? ""),
+    );
     setIsEditingBody(true);
   };
 
@@ -133,13 +152,13 @@ function NotificacoesPage() {
     if (!currentConfig) return;
     // Validate placeholders for body and subject
     const requiredPlaceholders = ["{nome_responsavel}", "{nome}"];
-    const missingBody = requiredPlaceholders.filter(ph => !editBody.includes(ph));
+    const missingBody = requiredPlaceholders.filter((ph) => !editBody.includes(ph));
     if (missingBody.length > 0) {
       setError(`O corpo do e‑mail deve conter os placeholders: ${missingBody.join(", ")}`);
       setSavingBody(false);
       return;
     }
-    const missingSubject = requiredPlaceholders.filter(ph => !editSubject.includes(ph));
+    const missingSubject = requiredPlaceholders.filter((ph) => !editSubject.includes(ph));
     if (missingSubject.length > 0) {
       setError(`O assunto do e‑mail deve conter os placeholders: ${missingSubject.join(", ")}`);
       setSavingBody(false);
@@ -165,7 +184,9 @@ function NotificacoesPage() {
       .from<Configuracao>("configuracoes_notificacao")
       .update(updatePayload)
       .eq("id", currentConfig.id)
-      .select("id, paroquia_id, paroquias(nome), template_email_faltas_subject, template_email_faltas_body, template_email_idade_subject, template_email_idade_body")
+      .select(
+        "id, paroquia_id, paroquias(nome), template_email_faltas_subject, template_email_faltas_body, template_email_idade_subject, template_email_idade_body",
+      )
       .maybeSingle();
 
     if (error) {
@@ -207,7 +228,7 @@ function NotificacoesPage() {
         </span>
       ) : (
         <span key={i}>{part}</span>
-      )
+      ),
     );
   };
 
@@ -236,10 +257,16 @@ function NotificacoesPage() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-[#0f172a]">E-mail pronto</p>
-              <p className="text-xs text-[#64748b]">Selecione o tipo de notificação e edite o corpo.</p>
+              <p className="text-xs text-[#64748b]">
+                Selecione o tipo de notificação e edite o corpo.
+              </p>
             </div>
             {!isEditingBody && (
-              <Button variant="secondary" onClick={startEditingBody} disabled={configLoading || !currentConfig}>
+              <Button
+                variant="secondary"
+                onClick={startEditingBody}
+                disabled={configLoading || !currentConfig}
+              >
                 Editar corpo
               </Button>
             )}
@@ -251,12 +278,22 @@ function NotificacoesPage() {
             <div className="flex gap-2">
               <Button
                 variant={selectedType === "faltas" ? "primary" : "secondary"}
-                onClick={() => { setSelectedType("faltas"); if (isEditingBody) editTemplate("faltas"); }}
-              >Falta</Button>
+                onClick={() => {
+                  setSelectedType("faltas");
+                  if (isEditingBody) editTemplate("faltas");
+                }}
+              >
+                Falta
+              </Button>
               <Button
                 variant={selectedType === "idade" ? "primary" : "secondary"}
-                onClick={() => { setSelectedType("idade"); if (isEditingBody) editTemplate("idade"); }}
-              >Idade</Button>
+                onClick={() => {
+                  setSelectedType("idade");
+                  if (isEditingBody) editTemplate("idade");
+                }}
+              >
+                Idade
+              </Button>
             </div>
           </div>
 
@@ -270,14 +307,29 @@ function NotificacoesPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {(selectedType === "faltas"
-                    ? ["{nome}", "{nome_responsavel}", "{total_faltas}", "{max_faltas}", "{paroquia}"]
-                    : ["{nome}", "{nome_responsavel}", "{idade_atual}", "{idade_minima}", "{nivel}", "{paroquia}"]
+                    ? [
+                        "{nome}",
+                        "{nome_responsavel}",
+                        "{total_faltas}",
+                        "{max_faltas}",
+                        "{paroquia}",
+                      ]
+                    : [
+                        "{nome}",
+                        "{nome_responsavel}",
+                        "{idade_atual}",
+                        "{idade_minima}",
+                        "{nivel}",
+                        "{paroquia}",
+                      ]
                   ).map((ph) => (
                     <button
                       key={ph}
                       type="button"
                       onClick={() => {
-                        const ta = document.getElementById("email-body-editor") as HTMLTextAreaElement | null;
+                        const ta = document.getElementById(
+                          "email-body-editor",
+                        ) as HTMLTextAreaElement | null;
                         if (ta) {
                           const start = ta.selectionStart ?? editBody.length;
                           const end = ta.selectionEnd ?? editBody.length;
@@ -305,49 +357,74 @@ function NotificacoesPage() {
                         color: "#7c3aed",
                         transition: "background 0.15s",
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#ede9fe"; }}
-                      onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#f5f3ff"; }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = "#ede9fe";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f5f3ff";
+                      }}
                     >
                       {ph}
                     </button>
                   ))}
                 </div>
                 <p className="text-xs text-[#94a3b8] mt-1">
-                  ⚠️ <strong>{"{nome}"}</strong> e <strong>{"{nome_responsavel}"}</strong> são obrigatórios no assunto e no corpo.
+                  ⚠️ <strong>{"{nome}"}</strong> e <strong>{"{nome_responsavel}"}</strong> são
+                  obrigatórios no assunto e no corpo.
                 </p>
               </div>
 
               {/* Campo assunto */}
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">Assunto</label>
+                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">
+                  Assunto
+                </label>
                 <input
                   value={editSubject}
                   onChange={(e) => setEditSubject(e.target.value)}
                   className="w-full text-sm border rounded-[8px] px-3 py-2 outline-none"
                   style={{ border: "1.5px solid #e2e8f0", fontFamily: "inherit" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#7c3aed";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                  }}
                 />
               </div>
 
               {/* Campo corpo */}
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">Corpo do e-mail</label>
+                <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">
+                  Corpo do e-mail
+                </label>
                 <textarea
                   id="email-body-editor"
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   rows={10}
                   className="w-full text-sm border rounded-[8px] px-3 py-2 outline-none resize-y"
-                  style={{ border: "1.5px solid #e2e8f0", fontFamily: "monospace", lineHeight: "1.6" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                  style={{
+                    border: "1.5px solid #e2e8f0",
+                    fontFamily: "monospace",
+                    lineHeight: "1.6",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#7c3aed";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#e2e8f0";
+                  }}
                 />
               </div>
 
               {/* Ações */}
               <div className="flex gap-2 justify-end">
-                <Button variant="secondary" onClick={() => setIsEditingBody(false)} disabled={savingBody}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsEditingBody(false)}
+                  disabled={savingBody}
+                >
                   Cancelar
                 </Button>
                 <Button onClick={saveBody} disabled={savingBody}>
@@ -374,7 +451,6 @@ function NotificacoesPage() {
           )}
         </div>
       </Card>
-
 
       {error && (
         <Card className="mb-4">
@@ -407,7 +483,9 @@ function NotificacoesPage() {
                 </div>
                 <div>
                   <SectionLabel>Enviado em</SectionLabel>
-                  <div className="text-sm text-[#0f172a]">{new Date(log.enviado_em).toLocaleString("pt-BR")}</div>
+                  <div className="text-sm text-[#0f172a]">
+                    {new Date(log.enviado_em).toLocaleString("pt-BR")}
+                  </div>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -417,14 +495,13 @@ function NotificacoesPage() {
                 </div>
                 <div className="md:col-span-2">
                   <SectionLabel>Detalhes</SectionLabel>
-                  <pre className="text-xs text-[#475569] bg-[#f8fafc] p-3 rounded-[8px] overflow-x-auto">{JSON.stringify(log.detalhes ?? {}, null, 2)}</pre>
+                  <pre className="text-xs text-[#475569] bg-[#f8fafc] p-3 rounded-[8px] overflow-x-auto">
+                    {JSON.stringify(log.detalhes ?? {}, null, 2)}
+                  </pre>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap justify-end gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => editTemplate(log.tipo)}
-                >
+                <Button variant="secondary" onClick={() => editTemplate(log.tipo)}>
                   Editar modelo
                 </Button>
                 <Button

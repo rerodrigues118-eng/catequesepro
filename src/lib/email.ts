@@ -35,11 +35,19 @@ export function getEmailErrorMessage(error: unknown) {
     return "O provedor bloqueou o envio por IP não autorizado. Autorize o IP do servidor no painel do provedor ou troque a configuração SMTP.";
   }
 
-  if (normalized.includes("invalid login") || normalized.includes("authentication failed") || normalized.includes("535")) {
+  if (
+    normalized.includes("invalid login") ||
+    normalized.includes("authentication failed") ||
+    normalized.includes("535")
+  ) {
     return "As credenciais SMTP estão incorretas ou não autorizadas para este provedor.";
   }
 
-  if (normalized.includes("timed out") || normalized.includes("econnrefused") || normalized.includes("connect")) {
+  if (
+    normalized.includes("timed out") ||
+    normalized.includes("econnrefused") ||
+    normalized.includes("connect")
+  ) {
     return "Não foi possível conectar ao servidor SMTP. Verifique o host, a porta e a conectividade da rede.";
   }
 
@@ -110,7 +118,10 @@ async function sendWithBrevoEmail({ to, subject, text, html }: SendEmailOptions)
     throw new Error("Brevo API key is not configured.");
   }
 
-  const from = process.env.EMAIL_FROM ?? process.env.BREVO_SENDER_EMAIL ?? "CatequesePRO <no-reply@catequesepro.local>";
+  const from =
+    process.env.EMAIL_FROM ??
+    process.env.BREVO_SENDER_EMAIL ??
+    "CatequesePRO <no-reply@catequesepro.local>";
   const { name: senderName, email: senderEmail } = parseFromAddress(from);
 
   const payload: Record<string, unknown> = {
@@ -141,15 +152,36 @@ async function sendWithBrevoEmail({ to, subject, text, html }: SendEmailOptions)
 
 export async function sendEmail({ to, subject, text, html }: SendEmailOptions) {
   const brevoApiKey = process.env.BREVO_API_KEY ?? process.env.BREVO_API_V3_KEY;
+  // Prefer Brevo API when available, but fall back to SMTP transport if Brevo fails
   if (brevoApiKey) {
     try {
       return await sendWithBrevoEmail({ to, subject, text, html });
     } catch (error) {
-      console.error("Falha ao enviar email via Brevo:", error);
-      throw new Error(getEmailErrorMessage(error));
+      console.error("Falha ao enviar email via Brevo, tentando SMTP como fallback:", error);
+      // try SMTP fallback
+      try {
+        const transporter = createTransporter();
+        const from = process.env.EMAIL_FROM ?? "CatequesePRO <no-reply@catequesepro.local>";
+        const textContent = text ?? "";
+        const htmlContent = html ?? (text ? htmlFromText(text) : "");
+
+        const info = await transporter.sendMail({
+          from,
+          to: normalizeRecipient(to),
+          subject,
+          text: textContent,
+          html: htmlContent,
+        });
+
+        return info;
+      } catch (smtpError) {
+        console.error("Falha ao enviar email via SMTP após erro Brevo:", smtpError);
+        throw new Error(getEmailErrorMessage(smtpError));
+      }
     }
   }
 
+  // No Brevo API key: use SMTP transport
   const transporter = createTransporter();
   const from = process.env.EMAIL_FROM ?? "CatequesePRO <no-reply@catequesepro.local>";
   const textContent = text ?? "";
@@ -166,7 +198,7 @@ export async function sendEmail({ to, subject, text, html }: SendEmailOptions) {
 
     return info;
   } catch (error) {
-    console.error("Falha ao enviar email:", error);
+    console.error("Falha ao enviar email via SMTP:", error);
     throw new Error(getEmailErrorMessage(error));
   }
 }
@@ -177,7 +209,10 @@ async function sendWithBrevo({ to, nome, inviteLink }: SendInviteEmailOptions) {
     throw new Error("Brevo API key is not configured.");
   }
 
-  const from = process.env.EMAIL_FROM ?? process.env.BREVO_SENDER_EMAIL ?? "CatequesePRO <no-reply@catequesepro.local>";
+  const from =
+    process.env.EMAIL_FROM ??
+    process.env.BREVO_SENDER_EMAIL ??
+    "CatequesePRO <no-reply@catequesepro.local>";
   const { name: senderName, email: senderEmail } = parseFromAddress(from);
   const subject = "Você foi convidado para acessar o CatequesePRO";
   const textContent = `Olá ${nome},\n\nVocê foi convidado para acessar o CatequesePRO. Clique no link abaixo para aceitar o convite e criar sua conta:\n\n${inviteLink}\n\nEste link expira em 48 horas.\n\nSe você não solicitou este convite, ignore este email.`;

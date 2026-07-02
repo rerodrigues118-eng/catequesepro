@@ -23,8 +23,11 @@ async function verifyAdminAuth(request: Request) {
     return { ok: false, error: "Perfil de usuário não encontrado." };
   }
 
-  if (profile.role !== "admin") {
-    return { ok: false, error: "Apenas administradores podem reenviar notificações." };
+  if (profile.role !== "admin" && profile.role !== "coordenacao") {
+    return {
+      ok: false,
+      error: "Apenas administradores e coordenadores podem reenviar notificações.",
+    };
   }
 
   return { ok: true };
@@ -42,7 +45,9 @@ export async function POST(request: Request) {
     const { notificacao_id } = body as { notificacao_id?: string };
 
     if (!notificacao_id) {
-      return new Response(JSON.stringify({ error: "ID da notificação é obrigatório." }), { status: 400 });
+      return new Response(JSON.stringify({ error: "ID da notificação é obrigatório." }), {
+        status: 400,
+      });
     }
 
     const { data: log, error: logError } = await supabaseAdmin
@@ -56,7 +61,9 @@ export async function POST(request: Request) {
     }
 
     if (!log) {
-      return new Response(JSON.stringify({ error: "Notificação não encontrada." }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Notificação não encontrada." }), {
+        status: 404,
+      });
     }
 
     const tipo = log.tipo;
@@ -64,7 +71,9 @@ export async function POST(request: Request) {
     const config = (log as any).configuracoes_notificacao;
 
     if (!catequizando || !config) {
-      return new Response(JSON.stringify({ error: "Dados insuficientes para reenvio." }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Dados insuficientes para reenvio." }), {
+        status: 500,
+      });
     }
 
     const placeholderMap: Record<string, string> = {
@@ -78,13 +87,13 @@ export async function POST(request: Request) {
       paroquia: config.paroquias?.nome ?? "",
     };
 
-    const templateSubject = tipo === "faltas"
-      ? config.template_email_faltas_subject
-      : config.template_email_idade_subject;
+    const templateSubject =
+      tipo === "faltas"
+        ? config.template_email_faltas_subject
+        : config.template_email_idade_subject;
 
-    const templateBody = tipo === "faltas"
-      ? config.template_email_faltas_body
-      : config.template_email_idade_body;
+    const templateBody =
+      tipo === "faltas" ? config.template_email_faltas_body : config.template_email_idade_body;
 
     const subject = templateSubject.replace(/\{(\w+)\}/g, (_, key) => placeholderMap[key] ?? "");
     const bodyText = templateBody.replace(/\{(\w+)\}/g, (_, key) => placeholderMap[key] ?? "");
@@ -108,6 +117,9 @@ export async function POST(request: Request) {
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message || "Erro desconhecido." }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: (error as Error).message || "Erro desconhecido." }),
+      { status: 500 },
+    );
   }
 }

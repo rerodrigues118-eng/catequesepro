@@ -1,5 +1,16 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Plus, UserCog, LogOut, Cross, CalendarCheck, Bell, Settings2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Plus,
+  UserCog,
+  LogOut,
+  Cross,
+  CalendarCheck,
+  Bell,
+  Settings2,
+  DownloadCloud,
+} from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -20,29 +31,83 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Início", icon: LayoutDashboard },
   { to: "/catequizandos", label: "Catequizandos", shortLabel: "Cadastros", icon: Users },
   { to: "/catequizandos/novo", label: "Novo cadastro", shortLabel: "Novo", icon: Plus },
-  { to: "/presencas", label: "Presenças", shortLabel: "Presença", icon: CalendarCheck, roles: ["coordenacao", "catequista"] },
+  {
+    to: "/presencas",
+    label: "Presenças",
+    shortLabel: "Presença",
+    icon: CalendarCheck,
+    roles: ["admin", "coordenacao", "catequista"],
+  },
 
   // Catequista section
   { to: "/avisos", label: "Mural de avisos", shortLabel: "Avisos", tiIcon: "ti-speakerphone" },
-  { to: "/plano-aulas", label: "Plano de aulas", shortLabel: "Plano", tiIcon: "ti-calendar-event", roles: ["coordenacao", "catequista"] },
-  { to: "/atividades", label: "Atividades", shortLabel: "Atividades", tiIcon: "ti-clipboard-list", roles: ["coordenacao", "catequista"] },
-  { to: "/ideias-ia", label: "Ideias IA", shortLabel: "IA", tiIcon: "ti-bulb", roles: ["coordenacao", "catequista"] },
+  {
+    to: "/plano-aulas",
+    label: "Plano de aulas",
+    shortLabel: "Plano",
+    tiIcon: "ti-calendar-event",
+    roles: ["admin", "coordenacao", "catequista"],
+  },
+  {
+    to: "/atividades",
+    label: "Atividades",
+    shortLabel: "Atividades",
+    tiIcon: "ti-clipboard-list",
+    roles: ["admin", "coordenacao", "catequista"],
+  },
+  {
+    to: "/ideias-ia",
+    label: "Ideias IA",
+    shortLabel: "IA",
+    tiIcon: "ti-bulb",
+    roles: ["admin", "coordenacao", "catequista"],
+  },
 
   // Coordenação section
-  { to: "/calendario", label: "Calendário", shortLabel: "Calendário", tiIcon: "ti-calendar-month", roles: ["coordenacao", "catequista"] },
-  { to: "/matriculas", label: "Matrículas", shortLabel: "Matrículas", tiIcon: "ti-user-plus", roles: ["admin", "coordenacao"] },
+  {
+    to: "/calendario",
+    label: "Calendário",
+    shortLabel: "Calendário",
+    tiIcon: "ti-calendar-month",
+    roles: ["admin", "coordenacao", "catequista"],
+  },
+  {
+    to: "/matriculas",
+    label: "Matrículas",
+    shortLabel: "Matrículas",
+    tiIcon: "ti-user-plus",
+    roles: ["admin", "coordenacao"],
+  },
 
   // Admin section
-  { to: "/notificacoes", label: "Notificações", shortLabel: "Notif.", icon: Bell, roles: ["admin", "coordenacao"] },
-  { to: "/configuracoes", label: "Configurações", shortLabel: "Config.", icon: Settings2, roles: ["admin"] },
-  { to: "/usuarios", label: "Usuários", shortLabel: "Usuários", icon: UserCog, roles: ["admin", "coordenacao"] },
+  {
+    to: "/notificacoes",
+    label: "Notificações",
+    shortLabel: "Notif.",
+    icon: Bell,
+    roles: ["admin", "coordenacao"],
+  },
+  {
+    to: "/configuracoes",
+    label: "Configurações",
+    shortLabel: "Config.",
+    icon: Settings2,
+    roles: ["admin"],
+  },
+  {
+    to: "/usuarios",
+    label: "Usuários",
+    shortLabel: "Usuários",
+    icon: UserCog,
+    roles: ["admin", "coordenacao"],
+  },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [installPrompt, setInstallPrompt] = useState<Event & { prompt: () => void } | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<(Event & { prompt: () => void }) | null>(null);
   const [unreadComunicados, setUnreadComunicados] = useState(0);
 
   // Capture PWA install prompt event
@@ -64,7 +129,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         .select("id, comunicados_leituras!left(usuario_id)")
         .eq("comunicados_leituras.usuario_id", profile!.id);
       if (data) {
-        const unread = data.filter((c: { comunicados_leituras: { usuario_id: string }[] }) => !c.comunicados_leituras?.length).length;
+        const unread = data.filter(
+          (c: { comunicados_leituras: { usuario_id: string }[] }) =>
+            !c.comunicados_leituras?.length,
+        ).length;
         setUnreadComunicados(unread);
       }
     }
@@ -76,7 +144,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (to: string) => {
     if (to === "/dashboard") return pathname === "/dashboard";
     if (to === "/catequizandos/novo") return pathname === "/catequizandos/novo";
-    if (to === "/catequizandos") return pathname === "/catequizandos" || (pathname.startsWith("/catequizandos") && pathname !== "/catequizandos/novo");
+    if (to === "/catequizandos")
+      return (
+        pathname === "/catequizandos" ||
+        (pathname.startsWith("/catequizandos") && pathname !== "/catequizandos/novo")
+      );
     return pathname.startsWith(to);
   };
 
@@ -99,7 +171,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="app-sidebar hidden md:flex flex-col fixed inset-y-0 left-0 z-30"
         style={{ width: 210, backgroundColor: "var(--color-sidebar)" }}
       >
-        <div className="px-5 py-5 flex items-center gap-2 text-white" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div
+          className="px-5 py-5 flex items-center gap-2 text-white"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+        >
           <Cross size={18} style={{ color: "#d97706" }} />
           <span className="text-[15px] font-semibold">CatequesePRO</span>
         </div>
@@ -107,7 +182,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           {items.map((item) => {
             const active = isActive(item.to);
             const Icon = item.icon;
-            const showBadge = item.badge && item.to === "/comunicados" && profile?.role === "catequista" && unreadComunicados > 0;
+            const showBadge =
+              item.badge &&
+              item.to === "/comunicados" &&
+              profile?.role === "catequista" &&
+              unreadComunicados > 0;
             return (
               <Link
                 key={item.to}
@@ -162,7 +241,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="px-4 py-4 space-y-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div
+          className="px-4 py-4 space-y-3"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        >
           {installPrompt && (
             <button
               onClick={handleInstall}
@@ -205,7 +287,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         {items.map((item) => {
           const active = isActive(item.to);
           const Icon = item.icon;
-          const showBadge = item.badge && item.to === "/comunicados" && profile?.role === "catequista" && unreadComunicados > 0;
+          const showBadge =
+            item.badge &&
+            item.to === "/comunicados" &&
+            profile?.role === "catequista" &&
+            unreadComunicados > 0;
           return (
             <Link
               key={item.to}
@@ -253,11 +339,35 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button
           onClick={handleLogout}
           className="flex-shrink-0 flex flex-col items-center justify-center py-2 text-[10px]"
-          style={{ minWidth: 52, paddingLeft: 4, paddingRight: 4, color: "var(--color-sidebar-muted)", borderTop: "2px solid transparent" }}
+          style={{
+            minWidth: 52,
+            paddingLeft: 4,
+            paddingRight: 4,
+            color: "var(--color-sidebar-muted)",
+            borderTop: "2px solid transparent",
+          }}
         >
           <LogOut size={18} />
           <span className="mt-1">Sair</span>
         </button>
+        {pathname === "/dashboard" && (
+          <a
+            href={(import.meta.env.VITE_APP_DOWNLOAD_URL as string) ?? "/download"}
+            className="flex-shrink-0 flex flex-col items-center justify-center py-2 text-[10px]"
+            style={{
+              minWidth: 52,
+              paddingLeft: 4,
+              paddingRight: 4,
+              color: "var(--color-sidebar-muted)",
+              borderTop: "2px solid transparent",
+            }}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <DownloadCloud size={18} />
+            <span className="mt-1">Baixar app</span>
+          </a>
+        )}
       </nav>
     </div>
   );
