@@ -414,8 +414,7 @@ function Dashboard() {
     return <div style={{ padding: 24, color: "#94a3b8" }}>Carregando...</div>;
   if (!profile) return <div style={{ padding: 24, color: "#94a3b8" }}>Carregando...</div>;
 
-  if (isAdmin)
-    return (
+  return (
       <div style={{ padding: 16, background: "#f8fafc", minHeight: "100%" }}>
         <div
           style={{
@@ -426,7 +425,6 @@ function Dashboard() {
             flexWrap: "wrap",
             marginBottom: 16,
           }}
-        >
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Dashboard</div>
             <div style={{ fontSize: 12, color: "#64748b" }}>{paroquiaNome}</div>
@@ -945,6 +943,130 @@ function Dashboard() {
         })()}
       </div>
     );
+  }
+
+  return (
+    <div style={{ padding: 16, background: "#f8fafc", minHeight: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 16,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Dashboard</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {catequista?.nome ?? "Catequista"}
+            {comunidade ? ` • ${comunidade.nome}` : ""}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <MetricCard cor="#1e40af" label="Catequizandos" valor={totalCatequizandos} sub="no total" />
+        <MetricCard cor="#15803d" label="Presenças hoje" valor={presentesHoje} />
+        <MetricCard cor="#dc2626" label="Faltas hoje" valor={faltasHoje} />
+        <MetricCard cor="#7c3aed" label="% Presença" valor={`${pctPresenca}%`} />
+      </div>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+        <div
+          style={{
+            flex: "1 1 260px",
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 8,
+            padding: 16,
+          }}
+        >
+          <SectionLabel>Presenças hoje</SectionLabel>
+          <div style={{ color: "#0f172a", fontSize: 13, marginBottom: 10 }}>
+            Total de catequizandos: {totalCatequizandos}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+            <div style={{ padding: 12, background: "#eff6ff", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: "#1e40af", marginBottom: 4 }}>Presentes</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{presentesHoje}</div>
+            </div>
+            <div style={{ padding: 12, background: "#fee2e2", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: "#dc2626", marginBottom: 4 }}>Faltas</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{faltasHoje}</div>
+            </div>
+            <div style={{ padding: 12, background: "#f0fdf4", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: "#15803d", marginBottom: 4 }}>Justificadas</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{justificadasHoje}</div>
+            </div>
+            <div style={{ padding: 12, background: "#eef2ff", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: "#7c3aed", marginBottom: 4 }}>Não marcados</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{naoMarcadosHoje}</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: "1 1 260px",
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 8,
+            padding: 16,
+          }}
+        >
+          <SectionLabel>Mais faltas no mês</SectionLabel>
+          {faltasMes.length === 0 ? (
+            <div style={{ color: "#94a3b8", fontSize: 12 }}>Nenhuma ocorrência este mês.</div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              {faltasMes.slice(0, 5).map((item) => (
+                <div key={item.catequizandoId} style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ color: "#0f172a" }}>{item.nome}</span>
+                  <span style={{ color: "#dc2626", fontWeight: 700 }}>{item.qty}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #e2e8f0",
+          borderRadius: 8,
+          padding: 16,
+        }}
+      >
+        <SectionLabel>Hoje</SectionLabel>
+        {statusCards.length === 0 ? (
+          <div style={{ color: "#94a3b8", fontSize: 12 }}>Nenhum catequizando encontrado.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {statusCards.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: 12,
+                  borderRadius: 8,
+                  background: "#f8fafc",
+                }}
+              >
+                <span>{item.nome}</span>
+                <span style={{ fontWeight: 700, color: item.status === "presente" ? "#15803d" : item.status === "falta" ? "#dc2626" : "#d97706" }}>
+                  {item.status === "presente" ? "Presente" : item.status === "falta" ? "Falta" : "Justificada"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 import { createFileRoute } from "@tanstack/react-router";
