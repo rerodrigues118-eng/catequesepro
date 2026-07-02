@@ -86,6 +86,16 @@ function LoginPage() {
             </div>
           </Field>
 
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/recuperar-senha" })}
+              className="text-xs text-[#1e40af] hover:text-[#1e3a8a] font-medium"
+            >
+              Esqueci a senha
+            </button>
+          </div>
+
           {error && (
             <div
               className="text-xs px-3 py-2 rounded-[8px]"
